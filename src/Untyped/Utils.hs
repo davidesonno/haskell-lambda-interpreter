@@ -21,16 +21,16 @@ displayEval displayFunc step e = mapM_ (\ex -> putStrLn (">> " ++ displayFunc ex
 pretty :: Expr -> String
 pretty e = case e of
     Var x -> x
-    Lam x body -> "\\" ++ x ++ ". " ++ pretty body ++ ""
-    Appl t1 t2 -> 
+    Lam x body -> "\\" ++ x ++ ". " ++ pretty body
+    Appl t1 t2 ->
         case (t1, t2) of
-        ((Var _), (Var _)) -> "" ++pretty t1 ++ " " ++ pretty t2 ++ ""
-        ((Var _), _) -> "" ++pretty t1 ++ " (" ++ pretty t2 ++ ")"
-        (_, (Var _)) -> "(" ++pretty t1 ++ ") " ++ pretty t2 ++ ""
+        (Var _, Var _) -> pretty t1 ++ " " ++ pretty t2
+        (Var _, _) -> pretty t1 ++ " (" ++ pretty t2 ++ ")"
+        (_, Var _) -> "(" ++pretty t1 ++ ") " ++ pretty t2
         (_, _) -> "(" ++pretty t1 ++ ")(" ++ pretty t2 ++ ")"
 
 prettyPrint :: Expr -> IO()
-prettyPrint = putStrLn . pretty 
+prettyPrint = putStrLn . pretty
 
 showCbvEval, showCbnEval, showNoEval :: Expr -> IO()
 showCbvEval = displayEval show cbvStep
