@@ -38,13 +38,13 @@ three = scc two
 -- renaming --
 testRename :: [Expr]
 testRename =
-  [ rename "x" (Var "x"),
-    rename "x" (Var "y"),
-    rename "x" (Lam "x" (Var "x")),
-    rename "x" (Lam "y" (Lam "x" (Appl (Var "x") (Var "y")))),
-    rename "x" (Lam "y" (Appl (Var "x") (Var "y"))),
-    rename "x" (Appl (Var "x") (Var "x")),
-    rename "z" (Lam "x" (Appl (Var "z") (Lam "z" (Var "z"))))
+  [ rename "x" "x'" (Var "x"),
+    rename "x" "x'" (Var "y"),
+    rename "x" "x'" (Lam "x" (Var "x")),
+    rename "x" "x'" (Lam "y" (Lam "x" (Appl (Var "x") (Var "y")))),
+    rename "x" "x'" (Lam "y" (Appl (Var "x") (Var "y"))),
+    rename "x" "x'" (Appl (Var "x") (Var "x")),
+    rename "z" "z'" (Lam "x" (Appl (Var "z") (Lam "z" (Var "z"))))
   ]
 
 expectedRename :: [Expr]

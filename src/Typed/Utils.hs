@@ -14,7 +14,7 @@ pretty e = case e of
     Pair t1 t2 -> "(" ++ pretty t1 ++ ", " ++ pretty t2 ++ ")"
     Fst t -> "fst(" ++ pretty t ++ ")"
     Snd t -> "snd(" ++ pretty t ++ ")"
-    Lam x ty body -> "\\" ++ x ++ ":" ++ show ty ++ ". " ++ pretty body
+    Lam x ty body -> "\\" ++ x ++ ":" ++ show ty ++ "-> " ++ pretty body
     Appl t1 t2 ->
         let s1 = case t1 of
                 Var _ -> pretty t1
@@ -38,3 +38,13 @@ typecheck :: Expr -> IO()
 typecheck t = do
     putStrLn ("Expr: " ++ pretty t)
     print (typeof [] t)
+
+prettyEvalSteps :: Expr -> IO ()
+prettyEvalSteps e = case evalSteps e of
+  Left err -> putStrLn err
+  Right steps -> mapM_ (\ex -> putStrLn (">> " ++ pretty ex)) steps
+
+printEvalSteps :: Expr -> IO ()
+printEvalSteps e = case evalSteps e of
+  Left err -> putStrLn err
+  Right steps -> mapM_ (\ex -> putStrLn (">> " ++ show ex)) steps

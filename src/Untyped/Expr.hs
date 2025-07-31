@@ -21,40 +21,35 @@ freeVars t = case t of
     Appl t1 t2 -> Set.union (freeVars t1) (freeVars t2)
 
 -- RENAMING --
--- | Rename the variable @x@ in the term @t@ to x ++ "'" ("a" becomes "a'").
--- FIXME a bit naive, does not check if the new name already exists ( i think)  
-rename :: String -> Expr -> Expr
-rename x t = case t of 
-    Var y 
-        | x==y -> Var (y ++ "'") 
-        | otherwise -> t -- (or Var y)
-    Lam y t1
-        | x==y -> Lam (y ++ "'") (rename x t1)
-        | otherwise -> Lam y (rename x t1)
-    Appl t1 t2 -> Appl (rename x t1) (rename x t2)
+freshVar :: Set.Set String -> String -> String
+freshVar used x = head $ dropWhile (`Set.member` used) candidates
+  where
+    candidates = [x ++ replicate n '\'' | n <- [1..]]
+
+-- | Rename the variable @old@ to @new@ in the term @t@.
+rename :: String -> String -> Expr -> Expr
+rename old new expr = case expr of
+    Var y
+        | y == old -> Var new
+        | otherwise -> Var y
+    Lam y body
+        | y == old -> Lam new (rename old new body)
+        | otherwise -> Lam y (rename old new body)
+    Appl t1 t2 -> Appl (rename old new t1) (rename old new t2)
 
 -- SUBSTITUTION --
 -- | The variable @x@ gets substituted with the expression @s@ in the term @t@.
-sub :: String -> Expr -> Expr
-    -> Expr
+sub :: String -> Expr -> Expr -> Expr
 sub x s t = case t of
-    Var y -> 
-        if y == x
-            then s
-            else t -- (or Var y)
-    Lam y t1 -> 
-        if y == x
-            then t -- (or Lam y t1)
-            else if Set.member y (freeVars s) -- is y in FV(s)?
-                then 
-                    let t' = rename y t in -- (or rename y (Lam y t1))
-                    case t' of
-                        Lam y' t1' -> Lam y' (sub x s t1')
-                        _ -> error "Renaming a Lam did not return a Lam." -- ?!
-                else Lam y (sub x s t1)
-    Appl t1 t2 -> -- substitute recursively
-        Appl (sub x s t1) (sub x s t2)
-
+    Var y -> if y == x then s else Var y
+    Lam y body
+        | y == x -> Lam y body
+        | y `Set.member` freeVars s ->
+            let y' = freshVar (Set.union (freeVars s) (freeVars body)) y
+                body' = rename y y' body
+            in Lam y' (sub x s body')
+        | otherwise -> Lam y (sub x s body)
+    Appl t1 t2 -> Appl (sub x s t1) (sub x s t2)
 
 -- EVALUATION --
 
@@ -99,10 +94,7 @@ cbnStep e = case e of
 noStep :: Expr -> Maybe Expr
 noStep e = case e of
     Var _ -> Nothing
-    Lam x body ->
-        case noStep body of
-            Just body' -> Just (Lam x body')
-            Nothing -> Nothing
+    Lam x body -> fmap (Lam x) (noStep body)
     Appl t1 t2 -> 
         case t1 of
             Lam x body -> Just (sub x t2 body) -- if redex, reduce
